@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "mod": "jscodeshift --parser=tsx -t src/imports.ts --extensions=ts,tsx --dry --print src/__testfixtures__/imports.input.tsx",
+    "mod": "jscodeshift --parser=tsx -t src/imports.ts --extensions=ts,tsx --print --dry src/__testfixtures__/fc.input.tsx",
+    "mod-ki": "jscodeshift --parser=tsx -t src/fc.ts --extensions=ts,tsx ../ki-frontend/app/src",
     "test": "jest"
   },
   "keywords": [],
