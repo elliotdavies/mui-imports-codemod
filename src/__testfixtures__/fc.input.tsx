@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { FC, ReactElement } from 'react'
 import X, { Y } from 'Z'
+import Z from 'ZZ'
 
 function A({ a }: Other) {
   return <span></span>
@@ -11,6 +12,10 @@ export function B({ a, b }: SomeProps) {
 }
 
 export function BB<T>({ a, b }: SomeProps<T>) {
+  return <span></span>
+}
+
+export function BBB({ a, b }: SomeProps<T>) {
   return <span></span>
 }
 
@@ -27,5 +32,9 @@ const E = ({ e }: SomeProps) => {
 }
 
 const F = <T extends U>({ f }: Props<T>) => {
+  return <a></a>
+}
+
+const G = ({ g }: Props<T>) => {
   return <a></a>
 }

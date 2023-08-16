@@ -1,4 +1,4 @@
-import { API, FileInfo } from 'jscodeshift';
+import { API, FileInfo, TSTypeReference } from 'jscodeshift';
 
 const transformer = (file: FileInfo, api: API) => {
   const j = api.jscodeshift;
@@ -48,7 +48,7 @@ const transformer = (file: FileInfo, api: API) => {
     const constName = path.node.id.name
 
     // @ts-expect-error
-    const propsType = path.node.init.params[0].typeAnnotation.typeAnnotation.typeName.name
+    const propsType: TSTypeReference = path.node.init.params[0].typeAnnotation.typeAnnotation
 
     if (path.node.init?.type !== 'ArrowFunctionExpression') {
       return path
@@ -66,9 +66,7 @@ const transformer = (file: FileInfo, api: API) => {
         name: constName,
         typeAnnotation: j.tsTypeAnnotation(j.tsTypeReference(
           j.identifier('FC'),
-          j.tsTypeParameterInstantiation([
-            j.tsTypeReference(j.identifier(propsType))
-          ])
+          j.tsTypeParameterInstantiation([ propsType ])
         )),
       }),
 
@@ -119,7 +117,7 @@ const transformer = (file: FileInfo, api: API) => {
   // Rewrite to an arrow function in the FC style
   .replaceWith(path => {
     // @ts-expect-error
-    const propsType = path.node.params[0].typeAnnotation.typeAnnotation.typeName.name
+    const propsType = path.node.params[0].typeAnnotation.typeAnnotation
 
     const funcName = path.node.id?.name
     const firstParam = path.node.params[0]
@@ -136,9 +134,7 @@ const transformer = (file: FileInfo, api: API) => {
           name: funcName,
           typeAnnotation: j.tsTypeAnnotation(j.tsTypeReference(
             j.identifier('FC'),
-            j.tsTypeParameterInstantiation([
-              j.tsTypeReference(j.identifier(propsType))
-            ])
+            j.tsTypeParameterInstantiation([ propsType ])
           )),
         }),
 
@@ -161,6 +157,8 @@ const transformer = (file: FileInfo, api: API) => {
    */
 
   if (fileWasModified) {
+    let foundReactImport: boolean = false
+
     // Find all the import statements
     root.find(j.ImportDeclaration, {
       source: {
@@ -172,6 +170,8 @@ const transformer = (file: FileInfo, api: API) => {
     .filter(path => !path.node.specifiers?.some(s => s.local?.name === 'FC'))
     // Add the 'FC'
     .replaceWith(path => {
+      foundReactImport = true
+
       return {
         ...path.node,
         specifiers: [
@@ -180,6 +180,17 @@ const transformer = (file: FileInfo, api: API) => {
         ]
       }
     })
+
+    if (!foundReactImport) {
+      root.find(j.ImportDeclaration)
+      .filter((_,i) => i === 0)
+      .insertAfter(() => {
+        return j.importDeclaration([
+          j.importSpecifier(j.identifier('FC'))
+        ],
+        j.literal('react'))
+      })
+    }
   }
 
   return root.toSource();
